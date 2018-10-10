@@ -35,7 +35,7 @@ Then you're ready to knit or run the Rmd notebook. You can compare the resulting
 Enjoy ;)
 
 
-##
+## Examples
 
 ![IT wine prod](sample_pic/it_wine.png)
 
