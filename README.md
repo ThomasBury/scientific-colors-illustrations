@@ -1,6 +1,6 @@
-# Scientific colours - few minimal examples
+<img align="right" width="100" height="100" src="/sample_pic/bender_hex.png">
 
-<img src="sample_pic/bender_hex.png" style="position:absolute;top:0px;right:0px;" width="75px" align="right" />
+# Scientific colours - few minimal examples
 
 
 ## Introduction 
