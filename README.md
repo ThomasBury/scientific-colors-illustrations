@@ -1,5 +1,8 @@
 # Scientific colours - few minimal examples
 
+<img src="sample_pic/bender_hex.png" style="position:absolute;top:0px;right:0px;" width="75px" align="right" />
+
+
 ## Introduction 
 
 Quoting http://www.fabiocrameri.ch/visualisation.php 
