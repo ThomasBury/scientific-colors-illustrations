@@ -1,0 +1,454 @@
+---
+title: "Spatial correlation - few minimal examples"
+author: |
+  | Thomas Bury
+  | Data Office - Advanced Analytics
+  | Allianz
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    theme: cosmo
+    highlight: tango
+    number_sections: true
+    toc: true
+    df_print: paged
+---
+
+<img src="D:/Users/EUDZ040/R/002_Zoning/notebook/allianz_logo.jpg" style="position:absolute;top:0px;right:0px;" width="175px" align="right" />
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# Maps and shapefiles
+library(spdep)
+library(maps)
+library(maptools)
+library(leaflet)
+library(rgdal)
+library(sf)
+
+# Colors
+library(viridis)
+library(RColorBrewer)
+library(scico)
+
+# web scrapping
+library(rvest)
+library(httr)
+
+# GAM
+library(mgcv)
+
+# data.table, what else ?
+library(data.table)
+library(rio)
+
+# caret
+library(caret)
+
+# Tidyverse
+library(magrittr)
+library(tidyverse)
+library(ggthemes)
+library(plotly)
+library(cowplot)
+
+# Data path
+# dir_path <- file.path("c:", "Users", "Thomas", "Belfius", "R",
+#                       "Spatial stat test")
+# setwd(dir_path)
+# Assign the number of cores
+library(parallel)
+library(doParallel)
+nbr_cores <- detectCores() - 1 # leave one core for the OS
+cl <- makeCluster(nbr_cores) 
+
+scico_pal_names <- scico::scico_palette_names()
+set_config(use_proxy(url = "it000-surf.zone2.proxy.allianz:8080"))
+```
+
+
+
+
+
+
+
+# Maps
+
+## Italy
+
+```{r}
+set_config(use_proxy(url = "it000-surf.zone2.proxy.allianz:8080"))
+# dt_pop_it <- fread("D:/Users/EUDZ040/R/002_Zoning/Data files/pop_it.csv", blank.lines.skip = T, nrows = 100)
+#wine <- read_html("https://italianwinecentral.com/wine-production-in-italy-by-region/")
+
+# access once and store and then read the stored file
+# wine <- content(GET("https://italianwinecentral.com/wine-production-in-italy-by-region/", timeout(60)))
+# wine %<>% 
+#   html_table() %>% 
+#   extract2(1) %>%
+#   slice(-21)
+# wine[,-1] %<>% map_df(parse_number)
+# export(wine, "D:/Users/EUDZ040/R/002_Zoning/Data files/wine.csv")
+wine <- fread("D:/Users/EUDZ040/R/002_Zoning/Data files/wine.csv", header=TRUE)
+
+italy <- st_read("D:/Users/EUDZ040/R/002_Zoning/Data files/Limiti_2016_ED50_g/Reg2016_ED50_g/Reg2016_ED50_g.shp")
+
+
+# your data will need to have these region names
+print(unique(italy$REGIONE))
+```
+
+
+```{r}
+levels(italy$REGIONE) <- wine$Region
+WineLocation <- full_join(italy, wine, by = c("REGIONE" = "Region"))
+```
+
+```{r}
+plot_wine <- ggplot(data = WineLocation, aes(fill = `2016`)) + 
+  geom_sf() + theme_fivethirtyeight() + guides(fill = guide_colorbar(barwidth = 8, barheight = 1))
+```
+
+
+
+### Viridis color palettes
+
+
+
+```{r}
+plot_list <- list()
+
+viridis_pal_names <- c('viridis', 'magma', 'inferno', 'plasma', 'cividis')
+n_names = length(scico_pal_names)
+
+for (i in seq(1,5)) {
+  plot_list[[i]] <- plot_wine + scale_fill_viridis(option=viridis_pal_names[i]) + ggtitle(viridis_pal_names[i])  
+}
+```
+
+
+Grid them, grid'em all
+
+
+```{r, fig.width=10, fig.height=10, fig.align="center"}
+do.call(plot_grid, c(plot_list, ncol=3))
+```
+
+
+
+### Scico color palettes
+
+
+```{r}
+plot_list <- list()
+
+scico_pal_names <- scico::scico_palette_names()
+n_names = length(scico_pal_names)
+
+for (i in seq(1,n_names)) {
+  plot_list[[i]] <- plot_wine + ggtitle(scico_pal_names[i]) + scale_fill_scico(palette = scico_pal_names[i])
+}
+```
+
+
+Grid them, grid'em all
+
+
+```{r, fig.width=8, fig.height=33, fig.align="center"}
+do.call(plot_grid, c(plot_list, ncol=3))
+```
+
+
+
+## US
+
+```{r}
+# Load the USmap
+unemp <- read.csv("http://datasets.flowingdata.com/unemployment09.csv",
+                  header = FALSE, stringsAsFactors = FALSE)
+names(unemp) <- c("id", "state_fips", "county_fips", "name", "year",
+                  "?", "?", "?", "rate")
+unemp$county <- tolower(gsub(" County, [A-Z]{2}", "", unemp$name))
+unemp$county <- gsub("^(.*) parish, ..$","\\1", unemp$county)
+unemp$state <- gsub("^.*([A-Z]{2}).*$", "\\1", unemp$name)
+county_df <- map_data("county", projection = "albers", parameters = c(39, 45))
+
+# Build the choropleth and the states borders
+names(county_df) <- c("long", "lat", "group", "order", "state_name", "county")
+county_df$state <- state.abb[match(county_df$state_name, tolower(state.name))]
+county_df$state_name <- NULL
+state_df <- map_data("state", projection = "albers", parameters = c(39, 45))
+choropleth <- merge(county_df, unemp, by = c("state", "county"))
+choropleth <- choropleth[order(choropleth$order), ]
+
+# The base plot
+plot_county <- ggplot(choropleth, aes(long, lat, group = group)) +
+  geom_polygon(aes(fill = rate), colour = alpha("white", 1 / 2), size = 0.01) +
+  geom_polygon(data = state_df, colour = "white", fill = NA, size = 0.025) +
+  coord_fixed() +
+  theme_minimal() +
+  ggtitle("US unemployment rate by county") + theme_fivethirtyeight() +
+  theme(axis.line = element_blank(), axis.text = element_blank(),
+        axis.ticks = element_blank(), axis.title = element_blank()) 
+  
+
+```
+
+
+## Viridis color palettes
+
+
+
+```{r}
+plot_list <- list()
+
+viridis_pal_names <- c('viridis', 'magma', 'inferno', 'plasma', 'cividis')
+n_names = length(scico_pal_names)
+
+for (i in seq(1,5)) {
+  plot_list[[i]] <- plot_county + scale_fill_viridis(option=viridis_pal_names[i]) + ggtitle(viridis_pal_names[i])  
+}
+```
+
+
+Grid them, grid'em all
+
+
+```{r, fig.width=10, fig.height=13, fig.align="center"}
+do.call(plot_grid, c(plot_list, ncol=2))
+```
+
+
+## Scico color palettes
+
+
+```{r}
+plot_list <- list()
+
+scico_pal_names <- scico::scico_palette_names()
+n_names = length(scico_pal_names)
+
+for (i in seq(1,n_names)) {
+  plot_list[[i]] <- plot_county + ggtitle(scico_pal_names[i]) + scale_fill_scico(palette = scico_pal_names[i])
+}
+```
+
+
+Grid them, grid'em all
+
+
+```{r, fig.width=15, fig.height=35, fig.align="center"}
+do.call(plot_grid, c(plot_list, ncol=3))
+```
+
+
+
+
+# Volcano
+
+## Viridis color palettes
+
+```{r}
+rm(volcano)
+volcano <- data.frame(
+  x = rep(seq_len(ncol(volcano)), each = nrow(volcano)),
+  y = rep(seq_len(nrow(volcano)), ncol(volcano)),
+  height = as.vector(volcano)
+)
+```
+
+
+```{r}
+plot_volcano <- ggplot(volcano, aes(x = x, y = y, fill = height)) + 
+  geom_raster() + theme_fivethirtyeight()
+```
+
+
+```{r}
+plot_list <- list()
+
+viridis_pal_names <- c('viridis', 'magma', 'inferno', 'plasma', 'cividis')
+n_names = length(scico_pal_names)
+
+for (i in seq(1,5)) {
+  plot_list[[i]] <- plot_volcano + scale_fill_viridis(option=viridis_pal_names[i]) + ggtitle(viridis_pal_names[i])
+}
+```
+
+
+Grid them, grid'em all
+
+
+```{r, fig.width=10, fig.height=8, fig.align="center"}
+do.call(plot_grid, c(plot_list, ncol=3))
+```
+
+
+## Scico color palettes
+
+
+```{r}
+plot_list <- list()
+
+scico_pal_names <- scico::scico_palette_names()
+n_names = length(scico_pal_names)
+
+for (i in seq(1,n_names)) {
+  plot_list[[i]] <- plot_volcano + ggtitle(scico_pal_names[i]) + scale_fill_scico(palette = scico_pal_names[i])
+}
+```
+
+
+Grid them, grid'em all
+
+
+```{r, fig.width=8, fig.height=30, fig.align="center"}
+do.call(plot_grid, c(plot_list, ncol=3))
+```
+
+
+
+# Line charts
+
+NB: Those color schemes are best suited to continuous scales
+
+```{r}
+t_H = 5
+N_ticks = 1000
+increment = rep(t_H/N_ticks, N_ticks)
+S0 = 1
+sigma = 0.025
+mu = 0.025
+# because Iprefer Google, I'll increase its trend
+dt_stocks <- data.table(time = cumsum(increment),
+                 AAPL = S0*exp(cumsum((mu-sigma*sigma/2)*increment + sigma*sqrt(t_H/N_ticks)*rnorm(N_ticks))),
+                 AMZN = S0*exp(cumsum((mu-sigma*sigma/2)*increment + sigma*sqrt(t_H/N_ticks)*rnorm(N_ticks))),
+                 GOOGL = S0*exp(cumsum((1.5*mu-sigma*sigma/2)*increment + sigma*sqrt(t_H/N_ticks)*rnorm(N_ticks))),
+                 SAS = S0*exp(cumsum((-mu-sigma*sigma/2)*increment + sigma*sqrt(t_H/N_ticks)*rnorm(N_ticks)))
+                 )
+dt_stocks <- melt(dt_stocks ,  id.vars = 'time', variable.name = 'series')
+
+d <- ggplot(data = dt_stocks, aes(x = time, y = value)) + geom_line(aes(colour = series), size = 1) + theme_fivethirtyeight()
+```
+
+
+
+## Viridis color palettes
+
+
+
+```{r}
+plot_list <- list()
+
+viridis_pal_names <- c('viridis', 'magma', 'inferno', 'plasma', 'cividis')
+n_names = length(scico_pal_names)
+
+for (i in seq(1,5)) {
+  plot_list[[i]] <- d + scale_colour_viridis_d(option=viridis_pal_names[i]) + ggtitle(viridis_pal_names[i])  
+}
+```
+
+
+Grid them, grid'em all
+
+
+```{r, fig.width=8, fig.height=8, fig.align="center", warnings = FALSE}
+do.call(plot_grid, c(plot_list, ncol=2))
+```
+
+
+## Scico color palettes
+
+
+```{r}
+plot_list <- list()
+n_names = length(scico_pal_names)
+
+for (i in seq(1,n_names)) {
+  plot_list[[i]] <- d + ggtitle(scico_pal_names[i]) + scico::scale_colour_scico_d(palette = scico_pal_names[i])
+}
+```
+
+
+Grid them, grid'em all
+
+
+```{r, fig.width=12, fig.height=24, fig.align="center"}
+do.call(plot_grid, c(plot_list, ncol=3))
+```
+
+
+
+
+
+
+# Categorical variables
+
+
+Taking the Tidyverse example  
+   
+```{r}
+txsamp <- subset(txhousing, city %in%
+  c("Houston", "Fort Worth", "San Antonio", "Dallas", "Austin"))
+d <- ggplot(data = txsamp, aes(x = sales, y = median)) + geom_point(aes(colour = city)) + theme_fivethirtyeight()
+```
+   
+
+## Viridis color palettes
+
+
+
+```{r}
+plot_list <- list()
+
+viridis_pal_names <- c('viridis', 'magma', 'inferno', 'plasma', 'cividis')
+n_names = length(scico_pal_names)
+
+for (i in seq(1,5)) {
+  plot_list[[i]] <- d + scale_colour_viridis_d(option=viridis_pal_names[i]) + ggtitle(viridis_pal_names[i])  
+}
+```
+
+
+Grid them, grid'em all
+
+
+```{r, fig.width=10, fig.height=10, fig.align="center", warnings = FALSE}
+do.call(plot_grid, c(plot_list, ncol=2))
+```
+
+
+
+
+
+
+## Scico color palettes
+
+
+```{r}
+plot_list <- list()
+n_names = length(scico_pal_names)
+
+for (i in seq(1,n_names)) {
+  plot_list[[i]] <- d + ggtitle(scico_pal_names[i]) + scico::scale_colour_scico_d(palette = scico_pal_names[i])
+}
+```
+
+
+Grid them, grid'em all
+
+
+```{r, fig.width=15, fig.height=30, fig.align="center"}
+do.call(plot_grid, c(plot_list, ncol=3))
+```
+
+
+
+
+
+
+
+
+
+
+
