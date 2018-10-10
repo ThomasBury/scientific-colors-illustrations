@@ -1,4 +1,4 @@
-<img align="right" width="75" src="/sample_pic/bender_hex.png">
+<img align="right" src="/sample_pic/bender_hex.png" width="75">
 
 # Scientific colours - few minimal examples
 
