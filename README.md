@@ -1,4 +1,4 @@
-# Spatial correlations - few minimal examples
+# Scientific colours - few minimal examples
 
 ## Introduction 
 
