@@ -1,5 +1,5 @@
 ---
-title: "Spatial correlation - few minimal examples"
+title: "Scientific colours - few minimal examples"
 author: |
   | Thomas Bury
   | Data Office - Advanced Analytics
@@ -183,11 +183,12 @@ choropleth <- choropleth[order(choropleth$order), ]
 
 # The base plot
 plot_county <- ggplot(choropleth, aes(long, lat, group = group)) +
-  geom_polygon(aes(fill = rate), colour = alpha("white", 1 / 2), size = 0.01) +
-  geom_polygon(data = state_df, colour = "white", fill = NA, size = 0.025) +
+  geom_polygon(aes(fill = rate)) +
+  geom_polygon(data = state_df, colour = "white", fill = NA, size = .5) +
   coord_fixed() +
   theme_minimal() +
   ggtitle("US unemployment rate by county") + theme_fivethirtyeight() +
+  guides(fill = guide_colorbar(barwidth = 8, barheight = 1)) +
   theme(axis.line = element_blank(), axis.text = element_blank(),
         axis.ticks = element_blank(), axis.title = element_blank()) 
   

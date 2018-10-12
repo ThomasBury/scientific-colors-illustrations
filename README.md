@@ -36,15 +36,38 @@ install.packages(
 
 Then you're ready to knit or run the Rmd notebook. You can compare the resulting ouput with mine.
 
-Enjoy ;)
+Enjoy and yes, there is a colour palette called Roma ;)
 
+## Examples for maps, topographic, categorical and line charts
 
-## Examples
+### Maps
 
+#### Wine production in Italy (scico and viridis palettes)
 ![IT wine prod](sample_pic/it_wine.png)
 
+![IT wine prod 2](sample_pic/it_wine_2.png)
 
+#### Unemployment in the US (scico and viridis palettes)
 ![US sensus](sample_pic/us_census.png)
+![US sensus 2](sample_pic/us_census_2.png)
+
+### Topography (scico and viridis palettes)
+![Volcano](sample_pic/volcano.png)
+![Volcano 2](sample_pic/volcano_2.png)
+
+
+### Categorical, housing price (scico and viridis palettes)
+![Housing](sample_pic/housing.png)
+![Housing 2](sample_pic/housing_2.png)
+
+### Line plot, geometrical Brownian motion (scico and viridis palettes)
+N.B: most of those palettes are supposed to be applied to continuous scale, some of them work great in discrete scale as well (or on dark background).
+
+![stocks](sample_pic/stocks.png)
+![stocks 2](sample_pic/stocks_2.png)
+
+
+
 
 ## Session info
 
