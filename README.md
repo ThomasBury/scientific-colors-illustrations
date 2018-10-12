@@ -1,7 +1,4 @@
-![Avatar](sample_pic/bender_hex_mini.png)
-
-
-# Scientific colours - few minimal examples
+# ![Avatar](sample_pic/bender_hex_mini.png) Scientific colours - few minimal examples
 
 
 ## Introduction 
