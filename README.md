@@ -1,4 +1,4 @@
-<img style="float: right;" src="/sample_pic/bender_hex_mini.png">
+![Avatar](sample_pic/bender_hex_mini.png)
 
 
 # Scientific colours - few minimal examples
