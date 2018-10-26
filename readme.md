@@ -1,10 +1,12 @@
+<img src="sample_pic/bender_hex.png" style="position:absolute;top:0px;right:0px;" width="120px" align="right" />
+
 Scientific colours - few minimal examples
 ================
 Thomas Bury
 2018-10-26
 
 
-<img src="D:/Users/EUDZ040/R-open/003_Scientific_colors/sample_pic/bender_hex.png" style="position:absolute;top:0px;right:0px;" width="120px" align="right" />
+
 
 Introduction
 ============
