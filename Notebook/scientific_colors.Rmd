@@ -2,19 +2,19 @@
 title: "Scientific colours - few minimal examples"
 author: |
   | Thomas Bury
-  | Data Office - Advanced Analytics
-  | Allianz
 date: '`r Sys.Date()`'
-output:
-  html_document:
-    theme: cosmo
-    highlight: tango
-    number_sections: true
-    toc: true
-    df_print: paged
+output: rmarkdown::github_document
 ---
 
-<img src="D:/Users/EUDZ040/R/002_Zoning/notebook/allianz_logo.jpg" style="position:absolute;top:0px;right:0px;" width="175px" align="right" />
+<!-- output: -->
+<!--   html_document: -->
+<!--     theme: cosmo -->
+<!--     highlight: tango -->
+<!--     number_sections: true -->
+<!--     toc: true -->
+<!--     df_print: paged -->
+
+<img src="D:/Users/EUDZ040/R-open/003_Scientific_colors/sample_pic/bender_hex.png" style="position:absolute;top:0px;right:0px;" width="120px" align="right" />
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -52,10 +52,6 @@ library(ggthemes)
 library(plotly)
 library(cowplot)
 
-# Data path
-# dir_path <- file.path("c:", "Users", "Thomas", "Belfius", "R",
-#                       "Spatial stat test")
-# setwd(dir_path)
 # Assign the number of cores
 library(parallel)
 library(doParallel)
@@ -63,35 +59,29 @@ nbr_cores <- detectCores() - 1 # leave one core for the OS
 cl <- makeCluster(nbr_cores) 
 
 scico_pal_names <- scico::scico_palette_names()
-set_config(use_proxy(url = "it000-surf.zone2.proxy.allianz:8080"))
 ```
 
 
 
 
+# Introduction
 
+To avoid to waste time trying different color palettes for different kind of charts, I built this minimal examples for maps, heatmaps, line-plots and scatter plots. Those color palettes are based on [scientific colors](http://www.fabiocrameri.ch/colourmaps.php). Thefollowing examples are based on:
+
+ * [Visualising Italian wine production](https://www.mango-solutions.com/blog/visualising-italian-wine-production)
+ * [GGplot2 documentation](https://ggplot2.tidyverse.org/reference/scale_viridis.html)
+ * [The viridis vignette](https://cran.r-project.org/web/packages/viridis/vignettes/intro-to-viridis.html)
+
+Special thanks to the Authors who provided such useful palettes. 
 
 
 # Maps
 
-## Italy
+## Italy - wine production
 
 ```{r}
-set_config(use_proxy(url = "it000-surf.zone2.proxy.allianz:8080"))
-# dt_pop_it <- fread("D:/Users/EUDZ040/R/002_Zoning/Data files/pop_it.csv", blank.lines.skip = T, nrows = 100)
-#wine <- read_html("https://italianwinecentral.com/wine-production-in-italy-by-region/")
-
-# access once and store and then read the stored file
-# wine <- content(GET("https://italianwinecentral.com/wine-production-in-italy-by-region/", timeout(60)))
-# wine %<>% 
-#   html_table() %>% 
-#   extract2(1) %>%
-#   slice(-21)
-# wine[,-1] %<>% map_df(parse_number)
-# export(wine, "D:/Users/EUDZ040/R/002_Zoning/Data files/wine.csv")
-wine <- fread("D:/Users/EUDZ040/R/002_Zoning/Data files/wine.csv", header=TRUE)
-
-italy <- st_read("D:/Users/EUDZ040/R/002_Zoning/Data files/Limiti_2016_ED50_g/Reg2016_ED50_g/Reg2016_ED50_g.shp")
+wine <- fread("Data/wine.csv", header=TRUE)
+italy <- st_read("Data/Limiti_2016_ED50_g/Reg2016_ED50_g/Reg2016_ED50_g.shp")
 
 
 # your data will need to have these region names
@@ -160,7 +150,7 @@ do.call(plot_grid, c(plot_list, ncol=3))
 
 
 
-## US
+## US - unemployment 2009 (crisis effect)
 
 ```{r}
 # Load the USmap
@@ -197,8 +187,6 @@ plot_county <- ggplot(choropleth, aes(long, lat, group = group)) +
 
 
 ## Viridis color palettes
-
-
 
 ```{r}
 plot_list <- list()
@@ -245,7 +233,7 @@ do.call(plot_grid, c(plot_list, ncol=3))
 
 
 
-# Volcano
+# Volcano - topology
 
 ## Viridis color palettes
 
@@ -309,9 +297,11 @@ do.call(plot_grid, c(plot_list, ncol=3))
 
 
 
-# Line charts
+# Line charts - some made up financial quotes
 
-NB: Those color schemes are best suited to continuous scales
+Completely made up stock quotes using simulation of geometrical Brownian motion (Wiener process).
+
+NB: Those color schemes are best suited to continuous scales. You probably want to test colorbrewer palettes as well.
 
 ```{r}
 t_H = 5
@@ -383,7 +373,7 @@ do.call(plot_grid, c(plot_list, ncol=3))
 
 
 
-# Categorical variables
+# Categorical variables - from the ggplot2 doc
 
 
 Taking the Tidyverse example  
